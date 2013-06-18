@@ -40,29 +40,34 @@ class WorldModel(object):
         return self._NUM_COLS
     
     def reset(self, density):
+        self._data.clear()
+        
         for row in range(0, self._NUM_ROWS):
             for col in range(0, self._NUM_COLS):
                 if random.random() < density:
-                    rowData = self._data[row]
-                    if rowData == None:
+                    
+                    rowData = None
+                    if row in self._data:
+                        rowData = self._data[row]
+                    else:
                         rowData = {}
                         self._data[row] = rowData
                     
-                    colData = rowData[col]
-                    if colData == None:
-                        colData = {}
-                        self._data[row][col] = colData
-                        
-                    cell = WorldCell()
-                    cell.row = row
-                    cell.column = col
-                    self._data[row][col] = cell
+                    cell = None
+                    if col in self._data:
+                        cell = rowData[col]
+                    else:
+                        cell = WorldCell()
+                        cell.row = row
+                        cell.column = col
+                        rowData[col] = cell
                     
     def isObstacle(self, row, col):
         blocked = False
-        rowData = self._data[row]
-        if rowData != None:
-            cell = rowData[col]
-            if cell != None:
-                blocked = True
+        if row in self._data:
+            rowData = self._data[row]
+            if col in rowData:
+                cell = rowData[col]
+                if cell != None:
+                    blocked = True
         return blocked
