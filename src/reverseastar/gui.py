@@ -117,17 +117,15 @@ class WorldWidget(QWidget):
         #Compute width/height of the columns and rows
         
         #Reserve pixels for the gridlines
-        width = width - (self._NUM_COLS - 1) * self._GRID_SIZE
-        height = height - (self._NUM_ROWS - 1) * self._GRID_SIZE
-        
-        colWidth = width / self._NUM_COLS
-        rowHeight = height / self._NUM_ROWS
+        colWidth = (width - (self._NUM_COLS - 1) * self._GRID_SIZE) / self._NUM_COLS
+        rowHeight = (height - (self._NUM_ROWS - 1) * self._GRID_SIZE) / self._NUM_ROWS
         
         colWidth = max(1, colWidth)
         rowHeight = max(1, rowHeight)
         
         self._drawGrid(width, height, colWidth, rowHeight, painter)
         self._drawObstacles(colWidth, rowHeight, painter)
+        self._drawStartAndEndCells(colWidth, rowHeight, painter)
         
         painter.end()
 
@@ -154,3 +152,16 @@ class WorldWidget(QWidget):
                 painter.drawLine(col * (colWidth + self._GRID_SIZE), 0,
                              col * (colWidth + self._GRID_SIZE), height)
                 
+    def _drawStartAndEndCells(self, colWidth, rowHeight, painter):
+        start = self._model.getStartCell()
+        end = self._model.getEndCell()
+        
+        if start != None:
+            painter.fillRect(start.column * (colWidth + self._GRID_SIZE),
+                             start.row * (rowHeight + self._GRID_SIZE),
+                             colWidth, rowHeight, QColor('Green'))
+
+        if end != None:
+            painter.fillRect(end.column * (colWidth + self._GRID_SIZE),
+                             end.row * (rowHeight + self._GRID_SIZE),
+                             colWidth, rowHeight, QColor('Red'))                
