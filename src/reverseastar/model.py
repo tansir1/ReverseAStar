@@ -10,6 +10,9 @@ class WorldCell(object):
     def __init__(self):
         self._row = -1
         self._col = -1
+        self._isObstacle = False
+        self._gScore = 0
+        self._fScore = 0
         
     @property
     def row(self):
@@ -25,7 +28,38 @@ class WorldCell(object):
     
     @column.setter
     def column(self, value):
-        self._col = value        
+        self._col = value
+    
+    #@property
+    def isObstacle(self):
+        return self._isObstacle
+    
+    #@isObstacle.setter
+    def setObstacle(self, value):
+        self._isObstacle = value
+        
+    @property
+    def gScore(self):
+        return self._gScore
+    
+    @gScore.setter
+    def gScore(self, value):
+        self._gScore = value
+        
+    @property
+    def fScore(self):
+        return self._fScore
+    
+    @fScore.setter
+    def fScore(self, value):
+        self._fScore = value
+        
+    def __eq__(self, other):
+        return (isinstance(other, self.__class__)
+                and self.__dict__ == other.__dict__)
+    
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
 class WorldModel(object):
     
@@ -35,6 +69,7 @@ class WorldModel(object):
         self._data = {}
         self._startCell = None
         self._endCell = None
+        self._resetWorldData()        
         
     def getNumRows(self):
         return self._NUM_ROWS
@@ -48,16 +83,27 @@ class WorldModel(object):
     def getEndCell(self):
         return self._endCell
     
-    def reset(self, density):
+    def _resetWorldData(self):
         self._data.clear()
         self._startCell = None
         self._endCell = None
+        
+        for row in range(0, self._NUM_ROWS):
+            self._data[row] = {}
+            for col in range(0, self._NUM_COLS):
+                cell = WorldCell()
+                cell.row = row
+                cell.column = col
+                self._data[row][col] = cell
+                
+    def reset(self, density):
+        self._resetWorldData()
         
         #Randomly set all cells in the world to an obstacle or not
         for row in range(0, self._NUM_ROWS):
             for col in range(0, self._NUM_COLS):
                 if random.random() < density:
-                    self._addObstacle(row, col)
+                    self._data[row][col].setObstacle(True)
 
         unedited = copy.deepcopy(self._data)
 
@@ -66,9 +112,9 @@ class WorldModel(object):
             for col in range(0, self._NUM_COLS):
                 obstacleNeighborCnt = self._countObstacleNeighbors(unedited, row, col)
                 if obstacleNeighborCnt > 3:
-                    self._addObstacle(row, col)
+                    self._data[row][col].setObstacle(True)
                 elif obstacleNeighborCnt < 2:
-                    self._clearObstacle(row, col)
+                    self._data[row][col].setObstacle(False)
                     
         # This searches for a suitable start cell in the lower left 13% of the grid
         # and an end patch in the upper right 13% of the grid. "Suitable" is defined 
@@ -86,9 +132,6 @@ class WorldModel(object):
             self.reset(density)
         self._startCell = start
         self._endCell = end
-        
-        print 'start {0},{1}'.format(start.row, start.column)
-        print 'end {0},{1}'.format(end.row, end.column)
         
     def _findOpenCell(self, xLimit, yLimit, row, col):
         '''
@@ -116,54 +159,17 @@ class WorldModel(object):
         neighbor cells beyond the border.
         '''
         obstacleNeighborCnt = 0
-        
-        #Check row above
-        if self.isObstacle(row-1, col-1, data):
-            obstacleNeighborCnt = obstacleNeighborCnt + 1
-        if self.isObstacle(row-1, col, data):
-            obstacleNeighborCnt = obstacleNeighborCnt + 1
-        if self.isObstacle(row-1, col+1, data):
-            obstacleNeighborCnt = obstacleNeighborCnt + 1
-            
-        #Check left and right sides
-        if self.isObstacle(row, col-1, data):
-            obstacleNeighborCnt = obstacleNeighborCnt + 1                        
-        if self.isObstacle(row, col+1, data):
-            obstacleNeighborCnt = obstacleNeighborCnt + 1
-        
-        #Check row below                
-        if self.isObstacle(row+1, col-1, data):
-            obstacleNeighborCnt = obstacleNeighborCnt + 1            
-        if self.isObstacle(row+1, col, data):
-            obstacleNeighborCnt = obstacleNeighborCnt + 1            
-        if self.isObstacle(row+1, col+1, data):
-            obstacleNeighborCnt = obstacleNeighborCnt + 1
+        neighbors = self.getNeighbors(row, col, data)
+        for cell in neighbors:
+            if cell.isObstacle():
+                obstacleNeighborCnt = obstacleNeighborCnt + 1
             
         return obstacleNeighborCnt
-                
-    def _addObstacle(self, row, col):
-        rowData = None
-        if row in self._data:
-            rowData = self._data[row]
-        else:
-            rowData = {}
-            self._data[row] = rowData
-        
-        cell = None
-        if col in rowData:
-            cell = rowData[col]
-        else:
-            cell = WorldCell()
-            cell.row = row
-            cell.column = col
-            rowData[col] = cell
-
-    def _clearObstacle(self, row, col):
-        if row in self._data:
-            rowData = self._data[row]
-            if col in rowData:
-                del rowData[col]            
-            
+    
+    def getCell(self, row, col):
+        return self._data[row][col]
+    
+    '''
     def isObstacle(self, row, col, data = None):
         
         if data is None:
@@ -181,4 +187,49 @@ class WorldModel(object):
     def isClear(self, row, col):
         blocked = self.isObstacle(row, col)
         return not blocked
-    
+    '''
+    def getNeighbors(self, row, col, data = None):
+        '''
+        Gets all the valid (in world bounds) cells surrounding the specified cell.
+        '''
+        if data is None:
+            data = self._data
+      
+        neighbors = []
+        
+        #Check row above
+        if self._isValidCoordinate(row-1, col-1, data):
+            neighbors.append(data[row-1][col-1])
+        if self._isValidCoordinate(row-1, col, data):
+            neighbors.append(data[row-1][col])
+        if self._isValidCoordinate(row-1, col+1, data):
+            neighbors.append(data[row-1][col+1])
+            
+        #Check left and right sides
+        if self._isValidCoordinate(row, col-1, data):
+            neighbors.append(data[row][col-1])                
+        if self._isValidCoordinate(row, col+1, data):
+            neighbors.append(data[row][col+1])
+        
+        #Check row below                
+        if self._isValidCoordinate(row+1, col-1, data):
+            neighbors.append(data[row+1][col-1])            
+        if self._isValidCoordinate(row+1, col, data):
+            neighbors.append(data[row+1][col])    
+        if self._isValidCoordinate(row+1, col+1, data):
+            neighbors.append(data[row+1][col+1])
+        
+        return neighbors
+            
+    def _isValidCoordinate(self, row, col, data = None):
+        '''
+        '''
+        if data is None:
+            data = self._data
+        
+        valid = True
+        if row - 1 < 0 or row + 1 > self._NUM_ROWS:
+            valid = False
+        if col - 1 < 0 or col + 1 > self._NUM_COLS:
+            valid = False
+        return valid

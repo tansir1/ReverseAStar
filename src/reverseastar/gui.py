@@ -9,11 +9,12 @@ class MainWindow(object):
     '''
 
 
-    def __init__(self, model):
+    def __init__(self, model, alg):
         self._window = QMainWindow()
         self._window.setWindowTitle("Reverse A*")
         self._worldWidget = WorldWidget(model)
         self._model = model
+        self._alg = alg
         self._buildGUI()
         self._window.show()
 
@@ -36,11 +37,11 @@ class MainWindow(object):
         
     def _buildControlPanel(self):
         setupBtn = QPushButton("Setup", self._window)
-        runBtn = QPushButton("Run", self._window)
-        stepBtn = QPushButton("Step", self._window)
+        runBtn = QPushButton("Go", self._window)
+        stepBtn = QPushButton("Step Once", self._window)
         
         self._spdLbl = QLabel("Speed?")
-        self._percentLbl = QLabel("0%")
+        self._percentLbl = QLabel("%")
         
         setupBtn.clicked.connect(self._onSetup)
         runBtn.clicked.connect(self._onRun)
@@ -52,6 +53,7 @@ class MainWindow(object):
         self._percentObstacleSldr.setMinimum(0)
         self._percentObstacleSldr.setMaximum(100)
         self._percentObstacleSldr.valueChanged.connect(self._onPercentSlideChange)
+        self._percentObstacleSldr.setValue(33)
 
         self._spdSlider = QSlider(Qt.Horizontal, self._window)
         self._spdSlider.setTickPosition(QSlider.TickPosition.TicksBelow)
@@ -91,6 +93,7 @@ class MainWindow(object):
     @Slot()
     def _onStep(self):
         print 'step called'
+        self._alg.step()
 
 class WorldWidget(QWidget):
         
@@ -132,7 +135,7 @@ class WorldWidget(QWidget):
     def _drawObstacles(self, colWidth, rowHeight, painter):
         for row in range(0, self._NUM_ROWS):
             for col in range(0, self._NUM_COLS):
-                if self._model.isObstacle(row, col):
+                if self._model.getCell(row, col).isObstacle():
                     painter.fillRect(col * (colWidth + self._GRID_SIZE),
                                      row * (rowHeight + self._GRID_SIZE),
                                      colWidth, rowHeight, QColor('black'))
