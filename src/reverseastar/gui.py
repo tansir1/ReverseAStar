@@ -32,37 +32,56 @@ class MainWindow(object):
         layout.addWidget(grpBx, 0, 1, 1, 5)
         
         centerWidget.setLayout(layout)
-        
-        #self._worldWidget.setMinimumSize(65,65)
+
         
     def _buildControlPanel(self):
         setupBtn = QPushButton("Setup", self._window)
         runBtn = QPushButton("Run", self._window)
         stepBtn = QPushButton("Step", self._window)
         
+        self._spdLbl = QLabel("Speed?")
+        self._percentLbl = QLabel("0%")
+        
         setupBtn.clicked.connect(self._onSetup)
         runBtn.clicked.connect(self._onRun)
         stepBtn.clicked.connect(self._onStep)
+
+        self._percentObstacleSldr = QSlider(Qt.Horizontal, self._window)
+        self._percentObstacleSldr.setTickPosition(QSlider.TickPosition.TicksBelow)
+        self._percentObstacleSldr.setTickInterval(10)
+        self._percentObstacleSldr.setMinimum(0)
+        self._percentObstacleSldr.setMaximum(100)
+        self._percentObstacleSldr.valueChanged.connect(self._onPercentSlideChange)
+
+        self._spdSlider = QSlider(Qt.Horizontal, self._window)
+        self._spdSlider.setTickPosition(QSlider.TickPosition.TicksBelow)
+        self._spdSlider.setTickInterval(25)
         
-        #slider = QSlider(Qt.Horizontal, self._window)
-        #slider.setTickPosition(QSlider.TickPosition.TicksBelow)
-        #slider.setTickInterval(25)
+        layout = QGridLayout()
+        layout.addWidget(setupBtn, 0, 0)
+        layout.addWidget(runBtn, 1, 0)
+        layout.addWidget(stepBtn, 2, 0)
         
-        layout = QVBoxLayout()
-        layout.addWidget(setupBtn)
-        layout.addWidget(runBtn)
-        layout.addWidget(stepBtn)
-        #layout.addWidget(QLabel("Update speed"))
-        #layout.addWidget(slider)
+        layout.addWidget(QLabel("Percent Occupied:"), 3, 0)
+        layout.addWidget(self._percentLbl, 3, 1)
+        layout.addWidget(self._percentObstacleSldr, 4, 0, 1, 2)
+        
+        layout.addWidget(QLabel("Update speed:"), 5, 0)
+        layout.addWidget(self._spdLbl, 5, 1)
+        layout.addWidget(self._spdSlider, 6, 0, 1, 2)
         
         grpBx = QGroupBox("Controls")
         grpBx.setLayout(layout)
+        #grpBx.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         return grpBx
+         
+    @Slot()
+    def _onPercentSlideChange(self, value):
+        self._percentLbl.setText(str(value) + "%")
                 
     @Slot()    
     def _onSetup(self):
-        print 'setup called'
-        self._model.reset(0.3)
+        self._model.reset(self._percentObstacleSldr.value() / 100.0)
         self._worldWidget.repaint()
     
     @Slot()
@@ -80,6 +99,8 @@ class WorldWidget(QWidget):
         self._NUM_COLS = model.getNumColumns()
         self._NUM_ROWS = model.getNumRows()
         self._GRID_SIZE = 1
+        #Assuming 33x33 grid, 1 pixel per cell and 1 pixel for grid lines
+        #requires a minimum of a 65x65 pixel area
         self.setMinimumSize(65,65)
         self._model = model
     
