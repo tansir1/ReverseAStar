@@ -36,7 +36,7 @@ class WorldModel(object):
     def getNumRows(self):
         return self._NUM_ROWS
     
-    def getNumColums(self):
+    def getNumColumns(self):
         return self._NUM_COLS
     
     def reset(self, density):
@@ -54,7 +54,7 @@ class WorldModel(object):
                         self._data[row] = rowData
                     
                     cell = None
-                    if col in self._data:
+                    if col in rowData:
                         cell = rowData[col]
                     else:
                         cell = WorldCell()

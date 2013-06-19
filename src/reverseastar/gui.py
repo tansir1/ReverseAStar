@@ -9,10 +9,11 @@ class MainWindow(object):
     '''
 
 
-    def __init__(self):
+    def __init__(self, model):
         self._window = QMainWindow()
         self._window.setWindowTitle("Reverse A*")
-        self._worldWidget = WorldWidget()
+        self._worldWidget = WorldWidget(model)
+        self._model = model
         self._buildGUI()
         self._window.show()
 
@@ -32,6 +33,8 @@ class MainWindow(object):
         
         centerWidget.setLayout(layout)
         
+        #self._worldWidget.setMinimumSize(65,65)
+        
     def _buildControlPanel(self):
         setupBtn = QPushButton("Setup", self._window)
         runBtn = QPushButton("Run", self._window)
@@ -41,10 +44,16 @@ class MainWindow(object):
         runBtn.clicked.connect(self._onRun)
         stepBtn.clicked.connect(self._onStep)
         
+        #slider = QSlider(Qt.Horizontal, self._window)
+        #slider.setTickPosition(QSlider.TickPosition.TicksBelow)
+        #slider.setTickInterval(25)
+        
         layout = QVBoxLayout()
         layout.addWidget(setupBtn)
         layout.addWidget(runBtn)
         layout.addWidget(stepBtn)
+        #layout.addWidget(QLabel("Update speed"))
+        #layout.addWidget(slider)
         
         grpBx = QGroupBox("Controls")
         grpBx.setLayout(layout)
@@ -53,6 +62,8 @@ class MainWindow(object):
     @Slot()    
     def _onSetup(self):
         print 'setup called'
+        self._model.reset(0.3)
+        self._worldWidget.repaint()
     
     @Slot()
     def _onRun(self):
@@ -64,12 +75,13 @@ class MainWindow(object):
 
 class WorldWidget(QWidget):
         
-    def __init__(self):
+    def __init__(self, model):
         super(WorldWidget, self).__init__()
-        self._NUM_COLS = 10
-        self._NUM_ROWS = 10
+        self._NUM_COLS = model.getNumColumns()
+        self._NUM_ROWS = model.getNumRows()
         self._GRID_SIZE = 1
         self.setMinimumSize(65,65)
+        self._model = model
     
     def paintEvent(self, e):
         painter = QPainter()
@@ -80,24 +92,44 @@ class WorldWidget(QWidget):
         
         #Blank out the world
         painter.fillRect(0, 0, width, height, QColor('white'))
+
+        #Compute width/height of the columns and rows
         
-        #TODO Border cells are not bounded properly
+        #Reserve pixels for the gridlines
+        width = width - (self._NUM_COLS - 1) * self._GRID_SIZE
+        height = height - (self._NUM_ROWS - 1) * self._GRID_SIZE
         
-        #Compute width of the columns and rows
         colWidth = width / self._NUM_COLS
         rowHeight = height / self._NUM_ROWS
-        #Allow room for grid lines
-        colWidth = colWidth - (self._NUM_COLS - 1) * self._GRID_SIZE
-        rowHeight = rowHeight - (self._NUM_ROWS - 1) * self._GRID_SIZE
+        
+        colWidth = max(1, colWidth)
+        rowHeight = max(1, rowHeight)
+        
+        self._drawGrid(width, height, colWidth, rowHeight, painter)
+        self._drawObstacles(colWidth, rowHeight, painter)
+        
+        painter.end()
+
+    def _drawObstacles(self, colWidth, rowHeight, painter):
+        for row in range(0, self._NUM_ROWS):
+            for col in range(0, self._NUM_COLS):
+                if self._model.isObstacle(row, col):
+                    painter.fillRect(col * (colWidth + self._GRID_SIZE),
+                                     row * (rowHeight + self._GRID_SIZE),
+                                     colWidth, rowHeight, QColor('black'))
+        
+    def _drawGrid(self, width, height, colWidth, rowHeight, painter):
+        painter.drawRect(0, 0, width-1, height-1)
         
         #Paint the grid lines
         brush = QBrush(QColor('black'))
         painter.setBrush(brush)
-        for row in range(1, self._NUM_ROWS):
-            painter.drawLine(0, row * rowHeight + self._GRID_SIZE,
-                             width, row * rowHeight + self._GRID_SIZE)
-            for col in range(1, self._NUM_COLS):
-                painter.drawLine(col * colWidth + self._GRID_SIZE, 0,
-                             col * colWidth + self._GRID_SIZE, height)
         
-        painter.end()
+        for row in range(0, self._NUM_ROWS):
+            painter.drawLine(1, row * (rowHeight + self._GRID_SIZE),
+                             width, row * (rowHeight + self._GRID_SIZE))
+
+            for col in range(1, self._NUM_COLS):
+                painter.drawLine(col * (colWidth + self._GRID_SIZE), 0,
+                             col * (colWidth + self._GRID_SIZE), height)
+                
