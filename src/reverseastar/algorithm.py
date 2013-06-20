@@ -12,49 +12,49 @@ class ReverseAStarAlgorithm(object):
         self._closedSet = []
         self._openSet = []
         self._current = None
-        self._worldModel.getStartCell().gScore = 0
-        self._worldModel.getStartCell().fScore = 0 + self._heuristic(self._worldModel.getStartCell())
+        self._worldModel.getStartCell().distanceTraveledToCell = 0
+        self._worldModel.getStartCell().estimatedPathCostToCell = 0 + self._heuristic(self._worldModel.getStartCell())
+        self._openSet.append(self._worldModel.getStartCell())
     
     def step(self):
         
         #Check if we still have cells to investigate
-        if not self._openSet:
-            self._current = self._lowestFscoreInOpenSet()
+        if self._openSet:
+            self._current = self._lowestEstimatedCost()
             if self._current == self._worldModel.getEndCell():
-                pass
-                #Bail out, time to start path reconstruction
+                print 'At goal!'
                 
             self._openSet.remove(self._current)
             self._closedSet.append(self._current)
             for neighbor in self._worldModel.getTraversableNeighbors(self._current.row, self._current.column):
-                currentGScore = self._computeGScore(self._current) + self._distBetweenCells(self._current, neighbor)
-                if neighbor in self._closedSet and currentGScore >= neighbor.gScore:
+                currentDist = self.computeDistTravelled(self._current) + self._distBetweenCells(self._current, neighbor)
+                if neighbor in self._closedSet and currentDist >= neighbor.distanceTraveledToCell:
                     continue
                 
-                if neighbor not in self._openSet or currentGScore < neighbor.gScore:
+                if neighbor not in self._openSet or currentDist < neighbor.distanceTraveledToCell:
                     #came_from[neighbor] = current
-                    neighbor.gScore = currentGScore
-                    neighbor.fScore = currentGScore + self._heuristic(neighbor)
+                    neighbor.distanceTraveledToCell = currentDist
+                    neighbor.estimatedPathCostToCell = currentDist + self._heuristic(neighbor)
                     if neighbor not in self._openSet:
                         self._openSet.append(neighbor)
     
-    def _lowestFscoreInOpenSet(self):
+    def _lowestEstimatedCost(self):
         lowestCost = None
         
         for cell in self._openSet:
             if lowestCost == None:
                 lowestCost = cell
-            elif cell.fScore < lowestCost.fScore:
+            elif cell.estimatedPathCostToCell < lowestCost.estimatedPathCostToCell:
                 lowestCost = cell
         
         return lowestCost
     
     def _heuristic(self, fromCell):
         #cost from fromCell to goal
-        return 1 
+        return 1.0
     
-    def _computeGScore(self, cell):
-        pass
+    def computeDistTravelled(self, cell):
+        return 1.0
     
     def _distBetweenCells(self, src, dest):
         vert = src.row - dest.row

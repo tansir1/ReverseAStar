@@ -11,8 +11,8 @@ class WorldCell(object):
         self._row = -1
         self._col = -1
         self._isObstacle = False
-        self._gScore = 0
-        self._fScore = 0
+        self._distTraveled = 0
+        self._pathCost = 0
         
     @property
     def row(self):
@@ -39,20 +39,20 @@ class WorldCell(object):
         self._isObstacle = value
         
     @property
-    def gScore(self):
-        return self._gScore
+    def distanceTraveledToCell(self):
+        return self._distTraveled
     
-    @gScore.setter
-    def gScore(self, value):
-        self._gScore = value
+    @distanceTraveledToCell.setter
+    def distanceTraveledToCell(self, value):
+        self._distTraveled = value
         
     @property
-    def fScore(self):
-        return self._fScore
+    def estimatedPathCostToCell(self):
+        return self._pathCost
     
-    @fScore.setter
-    def fScore(self, value):
-        self._fScore = value
+    @estimatedPathCostToCell.setter
+    def estimatedPathCostToCell(self, value):
+        self._pathCost = value
         
     def __eq__(self, other):
         return (isinstance(other, self.__class__)

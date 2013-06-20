@@ -12,7 +12,7 @@ class MainWindow(object):
     def __init__(self, model, alg):
         self._window = QMainWindow()
         self._window.setWindowTitle("Reverse A*")
-        self._worldWidget = WorldWidget(model)
+        self._worldWidget = WorldWidget(model, alg)
         self._model = model
         self._alg = alg
         self._buildGUI()
@@ -93,12 +93,11 @@ class MainWindow(object):
     
     @Slot()
     def _onStep(self):
-        print 'step called'
         self._alg.step()
 
 class WorldWidget(QWidget):
         
-    def __init__(self, model):
+    def __init__(self, model, alg):
         super(WorldWidget, self).__init__()
         self._NUM_COLS = model.getNumColumns()
         self._NUM_ROWS = model.getNumRows()
@@ -107,6 +106,7 @@ class WorldWidget(QWidget):
         #requires a minimum of a 65x65 pixel area
         self.setMinimumSize(65,65)
         self._model = model
+        self._alg = alg
     
     def paintEvent(self, e):
         painter = QPainter()
@@ -130,6 +130,8 @@ class WorldWidget(QWidget):
         self._drawGrid(width, height, colWidth, rowHeight, painter)
         self._drawObstacles(colWidth, rowHeight, painter)
         self._drawStartAndEndCells(colWidth, rowHeight, painter)
+        self._drawVisitedCells(colWidth, rowHeight, painter)
+        self._drawCurrentCell(colWidth, rowHeight, painter)
         
         painter.end()
 
@@ -168,4 +170,21 @@ class WorldWidget(QWidget):
         if end != None:
             painter.fillRect(end.column * (colWidth + self._GRID_SIZE),
                              end.row * (rowHeight + self._GRID_SIZE),
-                             colWidth, rowHeight, QColor('Red'))                
+                             colWidth, rowHeight, QColor('Red'))
+            
+    def _drawVisitedCells(self, colWidth, rowHeight, painter):
+        visited = self._alg.getVisitedCells()
+        
+        if visited != None:
+            for cell in visited:
+                painter.fillRect(cell.column * (colWidth + self._GRID_SIZE),
+                                 cell.row * (rowHeight + self._GRID_SIZE),
+                                 colWidth, rowHeight, QColor('Blue'))
+                
+    def _drawCurrentCell(self, colWidth, rowHeight, painter):
+        curCell = self._alg.getCurrentCell()
+        
+        if curCell != None:
+            painter.fillRect(curCell.column * (colWidth + self._GRID_SIZE),
+                             curCell.row * (rowHeight + self._GRID_SIZE),
+                             colWidth, rowHeight, QColor('Yellow'))
