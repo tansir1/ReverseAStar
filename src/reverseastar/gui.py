@@ -84,6 +84,7 @@ class MainWindow(object):
     @Slot()    
     def _onSetup(self):
         self._model.reset(self._percentObstacleSldr.value() / 100.0)
+        self._alg.reset()
         self._worldWidget.repaint()
     
     @Slot()

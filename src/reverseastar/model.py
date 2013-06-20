@@ -169,25 +169,6 @@ class WorldModel(object):
     def getCell(self, row, col):
         return self._data[row][col]
     
-    '''
-    def isObstacle(self, row, col, data = None):
-        
-        if data is None:
-            data = self._data
-        
-        blocked = False
-        if row in data:
-            rowData = data[row]
-            if col in rowData:
-                cell = rowData[col]
-                if cell != None:
-                    blocked = True
-        return blocked
-    
-    def isClear(self, row, col):
-        blocked = self.isObstacle(row, col)
-        return not blocked
-    '''
     def getNeighbors(self, row, col, data = None):
         '''
         Gets all the valid (in world bounds) cells surrounding the specified cell.
@@ -218,6 +199,49 @@ class WorldModel(object):
             neighbors.append(data[row+1][col])    
         if self._isValidCoordinate(row+1, col+1, data):
             neighbors.append(data[row+1][col+1])
+        
+        return neighbors
+
+    def getTraversableNeighbors(self, row, col):
+        neighbors = []
+        up = None
+        down = None
+        left = None
+        right = None
+        
+        #Check simple up/down/left/right directions
+        if self._isValidCoordinate(row-1, col):
+            up = self._data[row-1][col]
+        if self._isValidCoordinate(row+1, col):
+            down = self._data[row-1][col]    
+        if self._isValidCoordinate(row, col-1):
+            left = self._data[row][col-1]    
+        if self._isValidCoordinate(row, col+1):
+            right = self._data[row][col+1]    
+            
+        if up != None and not up.isObstacle():
+            neighbors.append(up)
+        if down != None and not down.isObstacle():
+            neighbors.append(down)
+        if left != None and not left.isObstacle():
+            neighbors.append(left)
+        if right != None and not right.isObstacle():
+            neighbors.append(right)
+            
+        #Check if diagonals are traversable.  Only passable if one of the
+        #component directions are clear.
+        if up != None and left != None:
+            if not (up.isObstacle() and left.isObstacle()):
+                neighbors.append(self._data[row-1][col-1])
+        if up != None and right != None:
+            if not (up.isObstacle() and right.isObstacle()):
+                neighbors.append(self._data[row-1][col+1])
+        if down != None and left != None:
+            if not (up.isObstacle() and left.isObstacle()):
+                neighbors.append(self._data[row+1][col-1])
+        if down != None and right != None:
+            if not (up.isObstacle() and left.isObstacle()):
+                neighbors.append(self._data[row+1][col+1])                                        
         
         return neighbors
             
