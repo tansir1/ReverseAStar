@@ -11,8 +11,8 @@ class WorldCell(object):
         self._row = -1
         self._col = -1
         self._isObstacle = False
-        self._distTraveled = 0
-        self._pathCost = 0
+        self._distTraveled = 0.0
+        self._pathCost = 0.0
         
     @property
     def row(self):
@@ -60,6 +60,9 @@ class WorldCell(object):
     
     def __ne__(self, other):
         return not self.__eq__(other)
+    
+    def __str__(self):
+        return '{0},{1},{2}'.format(self._row, self._col, self._isObstacle)
 
 class WorldModel(object):
     
@@ -213,7 +216,7 @@ class WorldModel(object):
         if self._isValidCoordinate(row-1, col):
             up = self._data[row-1][col]
         if self._isValidCoordinate(row+1, col):
-            down = self._data[row-1][col]    
+            down = self._data[row+1][col]    
         if self._isValidCoordinate(row, col-1):
             left = self._data[row][col-1]    
         if self._isValidCoordinate(row, col+1):
@@ -237,10 +240,10 @@ class WorldModel(object):
             if not (up.isObstacle() and right.isObstacle()):
                 neighbors.append(self._data[row-1][col+1])
         if down != None and left != None:
-            if not (up.isObstacle() and left.isObstacle()):
+            if not (down.isObstacle() and left.isObstacle()):
                 neighbors.append(self._data[row+1][col-1])
         if down != None and right != None:
-            if not (up.isObstacle() and left.isObstacle()):
+            if not (down.isObstacle() and right.isObstacle()):
                 neighbors.append(self._data[row+1][col+1])                                        
         
         return neighbors
@@ -252,8 +255,8 @@ class WorldModel(object):
             data = self._data
         
         valid = True
-        if row - 1 < 0 or row + 1 > self._NUM_ROWS:
+        if row < 0 or row >= self._NUM_ROWS:
             valid = False
-        if col - 1 < 0 or col + 1 > self._NUM_COLS:
+        if col < 0 or col >= self._NUM_COLS:
             valid = False
         return valid

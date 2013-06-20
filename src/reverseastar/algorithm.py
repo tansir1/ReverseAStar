@@ -27,7 +27,7 @@ class ReverseAStarAlgorithm(object):
             self._openSet.remove(self._current)
             self._closedSet.append(self._current)
             for neighbor in self._worldModel.getTraversableNeighbors(self._current.row, self._current.column):
-                currentDist = self.computeDistTravelled(self._current) + self._distBetweenCells(self._current, neighbor)
+                currentDist = self._current.distanceTraveledToCell + self._distBetweenCells(self._current, neighbor)
                 if neighbor in self._closedSet and currentDist >= neighbor.distanceTraveledToCell:
                     continue
                 
@@ -50,12 +50,8 @@ class ReverseAStarAlgorithm(object):
         return lowestCost
     
     def _heuristic(self, fromCell):
-        #cost from fromCell to goal
-        return 1.0
-    
-    def computeDistTravelled(self, cell):
-        return 1.0
-    
+        return self._distBetweenCells(fromCell, self._worldModel.getEndCell())
+        
     def _distBetweenCells(self, src, dest):
         vert = src.row - dest.row
         horz = src.column - dest.column
@@ -67,7 +63,7 @@ class ReverseAStarAlgorithm(object):
         return sqrt(vert + horz)
     
     def getVisitedCells(self):
-        self._closedSet
+        return self._closedSet
     
     def getCurrentCell(self):
         return self._current
