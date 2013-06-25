@@ -7,6 +7,8 @@ class ReverseAStarAlgorithm(object):
         self._closedSet = []
         self._openSet = []
         self._current = None
+        self._done = False
+        self._isSolvable = True
         
     def reset(self):
         self._closedSet = []
@@ -19,10 +21,10 @@ class ReverseAStarAlgorithm(object):
     def step(self):
         
         #Check if we still have cells to investigate
-        if self._openSet:
+        if len(self._openSet) > 0 and not self._done:
             self._current = self._lowestEstimatedCost()
             if self._current == self._worldModel.getEndCell():
-                print 'At goal!'
+                self._done = True
                 
             self._openSet.remove(self._current)
             self._closedSet.append(self._current)
@@ -37,6 +39,8 @@ class ReverseAStarAlgorithm(object):
                     neighbor.estimatedPathCostToCell = currentDist + self._heuristic(neighbor)
                     if neighbor not in self._openSet:
                         self._openSet.append(neighbor)
+        elif len(self._openSet) == 0 and not self._done:
+            self._isSolvable = False
     
     def _lowestEstimatedCost(self):
         lowestCost = None
@@ -70,3 +74,9 @@ class ReverseAStarAlgorithm(object):
     
     def getCurrentCell(self):
         return self._current
+    
+    def isSolvable(self):
+        return self._isSolvable
+    
+    def isDone(self):
+        return self._done

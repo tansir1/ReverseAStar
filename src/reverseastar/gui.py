@@ -122,6 +122,9 @@ class MainWindow(object):
         self._alg.step()
         self._worldWidget.repaint()
         
+        if self._alg.isDone() or not self._alg.isSolvable():
+            self._timer.stop()
+        
     def _resetTimer(self):
         timeOut = 1
         if self._spdSetting == 0:
@@ -169,7 +172,7 @@ class WorldWidget(QWidget):
         self._drawGrid(width, height, colWidth, rowHeight, painter)
         self._drawObstacles(colWidth, rowHeight, painter)
         self._drawVisitedCells(colWidth, rowHeight, painter)
-        self._drawActiveCells(colWidth, rowHeight, painter)
+        #self._drawActiveCells(colWidth, rowHeight, painter)
         self._drawStartAndEndCells(colWidth, rowHeight, painter)
         self._drawCurrentCell(colWidth, rowHeight, painter)
         self._drawPath(colWidth, rowHeight, painter)
@@ -177,6 +180,9 @@ class WorldWidget(QWidget):
         painter.end()
 
     def _drawObstacles(self, colWidth, rowHeight, painter):
+        '''
+        Fills in all obstacle cells as fully black.
+        '''
         for row in range(0, self._NUM_ROWS):
             for col in range(0, self._NUM_COLS):
                 if self._model.getCell(row, col).isObstacle():
@@ -185,6 +191,9 @@ class WorldWidget(QWidget):
                                      colWidth, rowHeight, QColor('black'))
         
     def _drawGrid(self, width, height, colWidth, rowHeight, painter):
+        '''
+        Draws the grid lines over the 2D world.
+        '''
         painter.drawRect(0, 0, width-1, height-1)
         
         #Paint the grid lines
@@ -200,6 +209,10 @@ class WorldWidget(QWidget):
                              col * (colWidth + self._GRID_SIZE), height)
                 
     def _drawStartAndEndCells(self, colWidth, rowHeight, painter):
+        '''
+        Fills the algorithm's starting cell as fully green and ending cell
+        as fully red.
+        '''           
         start = self._model.getStartCell()
         end = self._model.getEndCell()
         
@@ -214,6 +227,9 @@ class WorldWidget(QWidget):
                              colWidth, rowHeight, QColor('Red'))
             
     def _drawVisitedCells(self, colWidth, rowHeight, painter):
+        '''
+        Fills the algorithm's visited/non-active cells as fully blue.
+        '''         
         visited = self._alg.getVisitedCells()
         
         if visited != None:
@@ -228,20 +244,26 @@ class WorldWidget(QWidget):
                 painter.drawText(textLoc, "{0:.3g}".format(cell.estimatedPathCostToCell))                
 
     def _drawActiveCells(self, colWidth, rowHeight, painter):
-            visited = self._alg.getActiveCells()
-            
-            if visited != None:
-                for cell in visited:
-                    painter.fillRect(cell.column * (colWidth + self._GRID_SIZE),
-                                     cell.row * (rowHeight + self._GRID_SIZE),
-                                     colWidth, rowHeight, QColor('green'))
-                    #Draw the estimated cost value of the current cell
-                    textLoc = QPoint((cell.column + .1) * (colWidth + self._GRID_SIZE), 
-                                     #Row + 3/4 of a row so that text is in the cell
-                                     (cell.row + .75) * (rowHeight + self._GRID_SIZE))
-                    painter.drawText(textLoc, "{0:.3g}".format(cell.estimatedPathCostToCell))
+        '''
+        Fills the algorithm's active cells as fully green.
+        '''        
+        visited = self._alg.getActiveCells()
+        
+        if visited != None:
+            for cell in visited:
+                painter.fillRect(cell.column * (colWidth + self._GRID_SIZE),
+                                 cell.row * (rowHeight + self._GRID_SIZE),
+                                 colWidth, rowHeight, QColor('green'))
+                #Draw the estimated cost value of the current cell
+                textLoc = QPoint((cell.column + .1) * (colWidth + self._GRID_SIZE), 
+                                 #Row + 3/4 of a row so that text is in the cell
+                                 (cell.row + .75) * (rowHeight + self._GRID_SIZE))
+                painter.drawText(textLoc, "{0:.3g}".format(cell.estimatedPathCostToCell))
                 
     def _drawCurrentCell(self, colWidth, rowHeight, painter):
+        '''
+        Fills the "current" cell as fully yellow.
+        '''
         curCell = self._alg.getCurrentCell()
         
         if curCell != None:
@@ -255,6 +277,9 @@ class WorldWidget(QWidget):
             painter.drawText(textLoc, "{0:.3g}".format(curCell.estimatedPathCostToCell))
             
     def _drawPath(self, colWidth, rowHeight, painter):
+        '''
+        Draws the cheapest path from the start cell to the current cell.
+        '''
         curCell = self._alg.getCurrentCell()
         
         if curCell != None:
