@@ -42,7 +42,7 @@ class MainWindow(object):
 
         
     def _buildControlPanel(self):
-        self._spdLbl = QLabel("Speed?")
+        self._spdLbl = QLabel("Slow")
         self._percentLbl = QLabel("%")
         
         self._setupBtn.clicked.connect(self._onSetup)
