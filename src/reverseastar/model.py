@@ -13,6 +13,7 @@ class WorldCell(object):
         self._isObstacle = False
         self._distTraveled = 0.0
         self._pathCost = 0.0
+        self._cameFrom = None
         
     @property
     def row(self):
@@ -53,7 +54,15 @@ class WorldCell(object):
     @estimatedPathCostToCell.setter
     def estimatedPathCostToCell(self, value):
         self._pathCost = value
-        
+    
+    @property
+    def prevCellInPath(self):
+        return self._cameFrom
+    
+    @prevCellInPath.setter
+    def prevCellInPath(self, value):
+        self._cameFrom = value
+    
     def __eq__(self, other):
         return (isinstance(other, self.__class__)
                 and self.__dict__ == other.__dict__)
@@ -67,8 +76,8 @@ class WorldCell(object):
 class WorldModel(object):
     
     def __init__(self):
-        self._NUM_COLS = 33
-        self._NUM_ROWS = 33
+        self._NUM_COLS = 10
+        self._NUM_ROWS = 10
         self._data = {}
         self._startCell = None
         self._endCell = None

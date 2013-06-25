@@ -32,7 +32,7 @@ class ReverseAStarAlgorithm(object):
                     continue
                 
                 if neighbor not in self._openSet or currentDist < neighbor.distanceTraveledToCell:
-                    #came_from[neighbor] = current
+                    neighbor.prevCellInPath = self._current
                     neighbor.distanceTraveledToCell = currentDist
                     neighbor.estimatedPathCostToCell = currentDist + self._heuristic(neighbor)
                     if neighbor not in self._openSet:

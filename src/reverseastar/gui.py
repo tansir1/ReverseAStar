@@ -110,7 +110,6 @@ class MainWindow(object):
     
     @Slot()
     def _onRun(self):
-        self._setupBtn.setEnabled(False)
         if self._timer.isActive():
             self._timer.stop()
             self._runBtn.setText("Run")
@@ -121,11 +120,6 @@ class MainWindow(object):
     @Slot()
     def _onStep(self):
         self._alg.step()
-        visitedStr = ''
-        for cell in self._alg.getVisitedCells():
-            visitedStr = '{0}({1},{2}),'.format(visitedStr, cell.column, cell.row)
-        print 'visited {0}'.format(visitedStr)
-        print 'Current: {0},{1}'.format(self._alg.getCurrentCell().column, self._alg.getCurrentCell().row)
         self._worldWidget.repaint()
         
     def _resetTimer(self):
@@ -137,7 +131,7 @@ class MainWindow(object):
         elif self._spdSetting == 2:
             timeOut = 250            
         elif self._spdSetting == 3:
-            timeOut = 1
+            timeOut = .25
         self._timer.start(timeOut)
 
 class WorldWidget(QWidget):
@@ -178,6 +172,7 @@ class WorldWidget(QWidget):
         self._drawActiveCells(colWidth, rowHeight, painter)
         self._drawStartAndEndCells(colWidth, rowHeight, painter)
         self._drawCurrentCell(colWidth, rowHeight, painter)
+        self._drawPath(colWidth, rowHeight, painter)
         
         painter.end()
 
@@ -230,7 +225,7 @@ class WorldWidget(QWidget):
                 textLoc = QPoint((cell.column + .1) * (colWidth + self._GRID_SIZE), 
                                  #Row + 3/4 of a row so that text is in the cell
                                  (cell.row + .75) * (rowHeight + self._GRID_SIZE))
-                painter.drawText(textLoc, "{0:.2g}".format(cell.estimatedPathCostToCell))                
+                painter.drawText(textLoc, "{0:.3g}".format(cell.estimatedPathCostToCell))                
 
     def _drawActiveCells(self, colWidth, rowHeight, painter):
             visited = self._alg.getActiveCells()
@@ -244,7 +239,7 @@ class WorldWidget(QWidget):
                     textLoc = QPoint((cell.column + .1) * (colWidth + self._GRID_SIZE), 
                                      #Row + 3/4 of a row so that text is in the cell
                                      (cell.row + .75) * (rowHeight + self._GRID_SIZE))
-                    painter.drawText(textLoc, "{0:.2g}".format(cell.estimatedPathCostToCell))
+                    painter.drawText(textLoc, "{0:.3g}".format(cell.estimatedPathCostToCell))
                 
     def _drawCurrentCell(self, colWidth, rowHeight, painter):
         curCell = self._alg.getCurrentCell()
@@ -257,4 +252,26 @@ class WorldWidget(QWidget):
             textLoc = QPoint((curCell.column + .1) * (colWidth + self._GRID_SIZE), 
                              #Row + 3/4 of a row so that text is in the cell
                              (curCell.row + .75) * (rowHeight + self._GRID_SIZE))
-            painter.drawText(textLoc, "{0:.2g}".format(curCell.estimatedPathCostToCell))
+            painter.drawText(textLoc, "{0:.3g}".format(curCell.estimatedPathCostToCell))
+            
+    def _drawPath(self, colWidth, rowHeight, painter):
+        curCell = self._alg.getCurrentCell()
+        
+        if curCell != None:
+            prevCell = curCell.prevCellInPath
+            while prevCell != None:
+                prevCenter = QPoint((prevCell.column + .5) * (colWidth + self._GRID_SIZE), 
+                             #Row + 3/4 of a row so that text is in the cell
+                             (prevCell.row + .5) * (rowHeight + self._GRID_SIZE))
+                curCenter = QPoint((curCell.column + .5) * (colWidth + self._GRID_SIZE), 
+                             #Row + 3/4 of a row so that text is in the cell
+                             (curCell.row + .5) * (rowHeight + self._GRID_SIZE))
+                
+                #Paint line drawing a path from start to current/finish
+                #painter.setBrush(QColor('Red'))
+                painter.setPen(QColor('Red'))
+                painter.drawLine(prevCenter, curCenter)
+                
+                #Reset for next loop iteration
+                curCell = prevCell
+                prevCell = curCell.prevCellInPath
