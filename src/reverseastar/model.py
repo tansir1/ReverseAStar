@@ -234,16 +234,20 @@ class WorldModel(object):
         #Check if diagonals are traversable.  Only passable if one of the
         #component directions are clear.
         if up != None and left != None:
-            if not (up.isObstacle() and left.isObstacle()):
+            if not (up.isObstacle() and left.isObstacle()) and not \
+            self._data[row-1][col-1].isObstacle():
                 neighbors.append(self._data[row-1][col-1])
         if up != None and right != None:
-            if not (up.isObstacle() and right.isObstacle()):
+            if not (up.isObstacle() and right.isObstacle()) and not \
+            self._data[row-1][col+1].isObstacle():
                 neighbors.append(self._data[row-1][col+1])
         if down != None and left != None:
-            if not (down.isObstacle() and left.isObstacle()):
+            if not (down.isObstacle() and left.isObstacle()) and not \
+            self._data[row+1][col-1].isObstacle():
                 neighbors.append(self._data[row+1][col-1])
         if down != None and right != None:
-            if not (down.isObstacle() and right.isObstacle()):
+            if not (down.isObstacle() and right.isObstacle()) and not \
+            self._data[row+1][col+1].isObstacle():
                 neighbors.append(self._data[row+1][col+1])                                        
         
         return neighbors
