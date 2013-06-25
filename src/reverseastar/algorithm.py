@@ -65,5 +65,8 @@ class ReverseAStarAlgorithm(object):
     def getVisitedCells(self):
         return self._closedSet
     
+    def getActiveCells(self):
+        return self._openSet
+    
     def getCurrentCell(self):
         return self._current
