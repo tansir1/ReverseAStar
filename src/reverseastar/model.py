@@ -77,8 +77,8 @@ class WorldCell(object):
 class WorldModel(object):
     
     def __init__(self):
-        self._NUM_COLS = 10
-        self._NUM_ROWS = 10
+        self._NUM_COLS = 33
+        self._NUM_ROWS = 33
         self._data = {}
         self._startCell = None
         self._endCell = None
