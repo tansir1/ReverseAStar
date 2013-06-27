@@ -9,6 +9,8 @@ class ReverseAStarAlgorithm(object):
         self._current = None
         self._done = False
         self._isSolvable = True
+        self._startCell = None
+        self._endCell = None
         
     def reset(self):
         '''
@@ -20,9 +22,13 @@ class ReverseAStarAlgorithm(object):
         self._done = False
         self._isSolvable = True
         
-        self._worldModel.getStartCell().distanceTraveledToCell = 0
-        self._worldModel.getStartCell().estimatedPathCostToCell = 0 + self._heuristic(self._worldModel.getStartCell())
-        self._openSet.append(self._worldModel.getStartCell())
+        #Reverse A* is just like A*, but with the start and end cells swapped
+        startCell = self._worldModel.getEndCell()
+        self._endCell = self._worldModel.getStartCell()
+        
+        startCell.distanceTraveledToCell = 0
+        startCell.estimatedPathCostToCell = 0 + self._heuristic(self._endCell)
+        self._openSet.append(startCell)
     
     def step(self):
         '''
@@ -34,7 +40,7 @@ class ReverseAStarAlgorithm(object):
         if len(self._openSet) > 0 and not self._done:
             self._current = self._lowestEstimatedCost()
             #Bail out of the algorithm if we find the goal
-            if self._current == self._worldModel.getEndCell():
+            if self._current == self._endCell:
                 self._done = True
                 
             #Move the currently estimated lowest cost path/cell from active to
