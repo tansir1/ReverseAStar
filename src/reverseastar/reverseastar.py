@@ -1,7 +1,6 @@
 import sys
 
-from PySide.QtCore import *
-from PySide.QtGui import *
+from PySide.QtGui import QApplication
 
 import gui
 import model

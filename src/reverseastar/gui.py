@@ -1,5 +1,24 @@
-from PySide.QtCore import *
-from PySide.QtGui import *
+from PySide.QtCore import QPoint
+from PySide.QtCore import Qt
+from PySide.QtCore import QTimer
+from PySide.QtCore import Slot
+from PySide.QtGui import QButtonGroup
+from PySide.QtGui import QBrush
+from PySide.QtGui import QColor
+from PySide.QtGui import QCheckBox
+from PySide.QtGui import QGridLayout
+from PySide.QtGui import QGroupBox
+from PySide.QtGui import QHBoxLayout
+from PySide.QtGui import QLabel
+from PySide.QtGui import QMainWindow
+from PySide.QtGui import QPainter
+from PySide.QtGui import QPalette
+from PySide.QtGui import QPushButton
+from PySide.QtGui import QRadioButton
+from PySide.QtGui import QSlider
+from PySide.QtGui import QWidget
+from PySide.QtGui import QSizePolicy
+from PySide.QtGui import QVBoxLayout
 
 
 class MainWindow(object):
