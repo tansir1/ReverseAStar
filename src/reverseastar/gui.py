@@ -16,9 +16,6 @@ class MainWindow(object):
         self._model = model
         self._alg = alg
         self._spdSetting = 0
-        self._setupBtn = QPushButton("Setup", self._window)
-        self._runBtn = QPushButton("Go", self._window)
-        self._stepBtn = QPushButton("Step Once", self._window)
         self._timer = QTimer()
         self._timer.timeout.connect(self._onStep)        
         self._buildGUI()
@@ -32,23 +29,43 @@ class MainWindow(object):
         worldLayout.addWidget(self._worldWidget)
         grpBx = QGroupBox("2D World")
         grpBx.setLayout(worldLayout)
+        grpBx.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         
+        '''
         layout = QGridLayout()
         layout.setSpacing(10)
         layout.addWidget(self._buildControlPanel(), 0, 0, 1, 1)
         layout.addWidget(grpBx, 0, 1, 1, 5)
-        
+        '''
+        ctrlPan = self._buildControlPanel()
+        layout = QHBoxLayout()
+        layout.addWidget(ctrlPan)
+        layout.addWidget(grpBx)
+        layout.setAlignment(ctrlPan, Qt.AlignLeft | Qt.AlignTop)
         centerWidget.setLayout(layout)
 
         
     def _buildControlPanel(self):
-        self._spdLbl = QLabel("Slow")
-        self._percentLbl = QLabel("%")
+        layout = QVBoxLayout()
+        layout.addWidget(self._buildSetupPanel())
+        layout.addWidget(self._buildSpeedPanel())
+        layout.addWidget(self._buildResultsPanel())
+        layout.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         
+        #grpBx = QGroupBox("Controls")
+        #grpBx.setLayout(layout)
+        #return grpBx
+        #grpBx.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        ctrlWidget = QWidget(self._window)
+        ctrlWidget.setLayout(layout)
+        ctrlWidget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        return ctrlWidget        
+    
+    def _buildSetupPanel(self):
+        self._percentLbl = QLabel("%")
+        self._setupBtn = QPushButton("Setup", self._window)
         self._setupBtn.clicked.connect(self._onSetup)
-        self._runBtn.clicked.connect(self._onRun)
-        self._stepBtn.clicked.connect(self._onStep)
-
+        
         self._percentObstacleSldr = QSlider(Qt.Horizontal, self._window)
         self._percentObstacleSldr.setTickPosition(QSlider.TickPosition.TicksBelow)
         self._percentObstacleSldr.setTickInterval(10)
@@ -56,56 +73,90 @@ class MainWindow(object):
         self._percentObstacleSldr.setMaximum(100)
         self._percentObstacleSldr.valueChanged.connect(self._onPercentSlideChange)
         self._percentObstacleSldr.setValue(33)
-
-        self._spdSlider = QSlider(Qt.Horizontal, self._window)
-        self._spdSlider.setTickPosition(QSlider.TickPosition.TicksBelow)
-        self._spdSlider.setTickInterval(1)
-        self._spdSlider.setMinimum(0)
-        self._spdSlider.setMaximum(3)
-        self._spdSlider.valueChanged.connect(self._onSpeedSlideChange)
-        self._spdSlider.setValue(0)
         
         layout = QGridLayout()
-        layout.addWidget(self._setupBtn, 0, 0)
-        layout.addWidget(self._runBtn, 1, 0)
-        layout.addWidget(self._stepBtn, 2, 0)
+        layout.addWidget(self._setupBtn, 0, 0, 1, 2)
+        layout.addWidget(QLabel("Percent Occupied:"), 1, 0)
+        layout.addWidget(self._percentLbl, 1, 1)
+        layout.addWidget(self._percentObstacleSldr, 2, 0, 1, 2)
         
-        layout.addWidget(QLabel("Percent Occupied:"), 3, 0)
-        layout.addWidget(self._percentLbl, 3, 1)
-        layout.addWidget(self._percentObstacleSldr, 4, 0, 1, 2)
-        
-        layout.addWidget(QLabel("Update speed:"), 5, 0)
-        layout.addWidget(self._spdLbl, 5, 1)
-        layout.addWidget(self._spdSlider, 6, 0, 1, 2)
-        
-        grpBx = QGroupBox("Controls")
+        grpBx = QGroupBox("Setup Controls")
         grpBx.setLayout(layout)
-        #grpBx.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        grpBx.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
+        return grpBx        
+        
+    def _buildSpeedPanel(self):
+        self._runBtn = QPushButton("Run", self._window)
+        self._stepBtn = QPushButton("Step Once", self._window)        
+        self._runBtn.clicked.connect(self._onRun)
+        self._stepBtn.clicked.connect(self._onStep)        
+        
+        slowRadio = QRadioButton('Slow', self._window)
+        medRadio = QRadioButton('Medium', self._window)
+        fastRadio = QRadioButton('Fast', self._window)
+        notVisRadio = QRadioButton('Not visible', self._window)
+        slowRadio.setChecked(True)        
+        
+        self._speedGroup = QButtonGroup(self._window)
+        self._speedGroup.addButton(slowRadio, 0)
+        self._speedGroup.addButton(medRadio, 1)
+        self._speedGroup.addButton(fastRadio, 2)
+        self._speedGroup.addButton(notVisRadio, 3)
+        self._speedGroup.buttonClicked.connect(self._onSpeedChange)
+          
+        layout = QVBoxLayout()
+        layout.addWidget(self._runBtn)
+        layout.addWidget(self._stepBtn)
+        layout.addWidget(slowRadio)
+        layout.addWidget(medRadio)
+        layout.addWidget(fastRadio)
+        layout.addWidget(notVisRadio)
+        
+        grpBx = QGroupBox("Run Controls")
+        grpBx.setLayout(layout)
+        grpBx.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
         return grpBx
-         
-    @Slot()
-    def _onPercentSlideChange(self, value):
-        self._percentLbl.setText(str(value) + "%")
+    
+    def _buildResultsPanel(self):
+        self._doneLbl = QLabel("No", self._window)
+        self._solvableLbl = QLabel("Yes", self._window)
+        
+        layout = QGridLayout()
+        layout.addWidget(QLabel("Path Found:"), 0, 0)
+        layout.addWidget(self._doneLbl, 0, 1)
+        layout.addWidget(QLabel("Is Solvable:"), 1, 0)
+        layout.addWidget(self._solvableLbl, 1, 1)
+        
+        grpBx = QGroupBox("Results")
+        grpBx.setLayout(layout)
+        grpBx.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
+        return grpBx
     
     @Slot()
-    def _onSpeedSlideChange(self, value):
-        self._spdSetting = value
-        if value == 0:
-            self._spdLbl.setText("Slow")
-        elif value == 1:
-            self._spdLbl.setText("Medium")            
-        elif value == 2:
-            self._spdLbl.setText("Fast")            
-        elif value == 3:
-            self._spdLbl.setText("Not Visible")
-            
+    def _onPercentSlideChange(self, value):
+        #Add extra padding to the front of the string to help prevent
+        #gui layout resizing
+        if value < 10:
+            self._percentLbl.setText("  " + str(value) + "%")
+        elif value < 100:
+            self._percentLbl.setText(" " + str(value) + "%")
+        else:
+            self._percentLbl.setText(str(value) + "%")
+    
+    @Slot()
+    def _onSpeedChange(self, value):
+        self._spdSetting = self._speedGroup.checkedId()
         if self._timer.isActive():
             self._resetTimer()            
          
     @Slot()
     def _onSetup(self):
+        self._timer.stop()
+        self._runBtn.setText('Run')
         self._model.reset(self._percentObstacleSldr.value() / 100.0)
         self._alg.reset()
+        self._doneLbl.setText("No")
+        self._solvableLbl.setText("Yes")        
         self._worldWidget.repaint()
     
     @Slot()
@@ -124,18 +175,31 @@ class MainWindow(object):
         
         if self._alg.isDone() or not self._alg.isSolvable():
             self._timer.stop()
+            self._runBtn.setText('Run')
+        
+        if self._alg.isDone():
+            self._doneLbl.setText("Yes")
+            
+        if not self._alg.isSolvable():
+            self._solvableLbl.setText("No")
+            
         
     def _resetTimer(self):
-        timeOut = 1
-        if self._spdSetting == 0:
-            timeOut = 1000
-        elif self._spdSetting == 1:
-            timeOut = 500
-        elif self._spdSetting == 2:
-            timeOut = 250            
-        elif self._spdSetting == 3:
-            timeOut = .25
-        self._timer.start(timeOut)
+        if self._spdSetting == 3:
+            while not self._alg.isDone() and self._alg.isSolvable():
+                self._alg.step()
+            self._worldWidget.repaint()
+            self._timer.stop()
+            self._runBtn.setText("Run")            
+        else:
+            timeOut = 1
+            if self._spdSetting == 0:
+                timeOut = 500
+            elif self._spdSetting == 1:
+                timeOut = 250
+            elif self._spdSetting == 2:
+                timeOut = 1            
+            self._timer.start(timeOut)
 
 class WorldWidget(QWidget):
         
