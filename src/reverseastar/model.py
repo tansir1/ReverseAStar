@@ -91,9 +91,15 @@ class WorldModel(object):
         return self._NUM_COLS
     
     def getStartCell(self):
+        '''
+        Get the starting point of the world for path finding.
+        '''
         return self._startCell
     
     def getEndCell(self):
+        '''
+        Get the end point of the world for path finding.
+        '''
         return self._endCell
     
     def _resetWorldData(self):
@@ -110,6 +116,12 @@ class WorldModel(object):
                 self._data[row][col] = cell
                 
     def reset(self, density):
+        '''
+        Create a new random 2D world with the given density of obstacles as the
+        random seed for obstacle generation.  After the random generation this
+        method will attempt to smooth out and cluster the obstacles and free
+        paths.
+        '''
         self._resetWorldData()
         
         #Randomly set all cells in the world to an obstacle or not
@@ -216,6 +228,10 @@ class WorldModel(object):
         return neighbors
 
     def getTraversableNeighbors(self, row, col):
+        '''
+        Returns a list of all neighbors of the cell at given [row,col] that
+        can be traveled across.
+        '''
         neighbors = []
         up = None
         down = None
@@ -264,6 +280,7 @@ class WorldModel(object):
             
     def _isValidCoordinate(self, row, col, data = None):
         '''
+        Checks if the given coordinates are within bounds of the world.
         '''
         if data is None:
             data = self._data
