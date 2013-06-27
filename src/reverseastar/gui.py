@@ -8,7 +8,6 @@ class MainWindow(object):
     application's main window.
     '''
 
-
     def __init__(self, model, alg):
         self._window = QMainWindow()
         self._window.setWindowTitle("Reverse A*")
@@ -31,12 +30,6 @@ class MainWindow(object):
         grpBx.setLayout(worldLayout)
         grpBx.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         
-        '''
-        layout = QGridLayout()
-        layout.setSpacing(10)
-        layout.addWidget(self._buildControlPanel(), 0, 0, 1, 1)
-        layout.addWidget(grpBx, 0, 1, 1, 5)
-        '''
         ctrlPan = self._buildControlPanel()
         layout = QHBoxLayout()
         layout.addWidget(ctrlPan)
@@ -122,6 +115,14 @@ class MainWindow(object):
         self._doneLbl = QLabel("No", self._window)
         self._solvableLbl = QLabel("Yes", self._window)
         
+        pal = self._doneLbl.palette()
+        pal.setColor(QPalette.Window, Qt.green)
+        self._doneLbl.setPalette(pal)
+
+        pal = self._solvableLbl.palette()
+        pal.setColor(QPalette.Window, Qt.red)
+        self._solvableLbl.setPalette(pal)          
+        
         layout = QGridLayout()
         layout.addWidget(QLabel("Path Found:"), 0, 0)
         layout.addWidget(self._doneLbl, 0, 1)
@@ -140,15 +141,15 @@ class MainWindow(object):
         self._costChk = QCheckBox("Draw Estimated Costs")
         
         pal = self._openChk.palette()
-        pal.setColor(QPalette.WindowText, QColor('green'))
+        pal.setColor(QPalette.WindowText, Qt.green)
         self._openChk.setPalette(pal)
         
         pal = self._visitedChk.palette()
-        pal.setColor(QPalette.WindowText, QColor('cyan'))
+        pal.setColor(QPalette.WindowText, Qt.cyan)
         self._visitedChk.setPalette(pal)
         
         pal = self._pathChk.palette()
-        pal.setColor(QPalette.WindowText, QColor('red'))
+        pal.setColor(QPalette.WindowText, Qt.red)
         self._pathChk.setPalette(pal)
         
         self._visitedChk.setChecked(True)
@@ -177,6 +178,7 @@ class MainWindow(object):
         self._worldWidget.setDrawVisitedCells(self._visitedChk.isChecked())
         self._worldWidget.setDrawPath(self._pathChk.isChecked())
         self._worldWidget.setDrawCosts(self._costChk.isChecked())
+        self._worldWidget.repaint()
     
     @Slot()
     def _onPercentSlideChange(self, value):
@@ -202,7 +204,9 @@ class MainWindow(object):
         self._model.reset(self._percentObstacleSldr.value() / 100.0)
         self._alg.reset()
         self._doneLbl.setText("No")
-        self._solvableLbl.setText("Yes")        
+        self._solvableLbl.setText("Yes")
+        self._doneLbl.setAutoFillBackground(False)
+        self._solvableLbl.setAutoFillBackground(False)
         self._worldWidget.repaint()
     
     @Slot()
@@ -223,20 +227,27 @@ class MainWindow(object):
             self._timer.stop()
             self._runBtn.setText('Run')
         
+        self._checkTerminalConditions()
+            
+    def _checkTerminalConditions(self):
         if self._alg.isDone():
             self._doneLbl.setText("Yes")
-            
+            self._doneLbl.setAutoFillBackground(True)
+
         if not self._alg.isSolvable():
+            self._solvableLbl.setAutoFillBackground(True)
             self._solvableLbl.setText("No")
-            
-        
+
     def _resetTimer(self):
         if self._spdSetting == 3:
             while not self._alg.isDone() and self._alg.isSolvable():
                 self._alg.step()
+                
             self._worldWidget.repaint()
             self._timer.stop()
-            self._runBtn.setText("Run")            
+            self._runBtn.setText("Run")
+            
+            self._checkTerminalConditions()            
         else:
             timeOut = 1
             if self._spdSetting == 0:
@@ -254,9 +265,7 @@ class WorldWidget(QWidget):
         self._NUM_COLS = model.getNumColumns()
         self._NUM_ROWS = model.getNumRows()
         self._GRID_SIZE = 1
-        #Assuming 33x33 grid, 1 pixel per cell and 1 pixel for grid lines
-        #requires a minimum of a 65x65 pixel area
-        self.setMinimumSize(65,65)
+        self.setMinimumSize(400,200)
         self._model = model
         self._alg = alg
         self._drawActive = False
@@ -284,7 +293,7 @@ class WorldWidget(QWidget):
         height = self.height()
         
         #Blank out the world
-        painter.fillRect(0, 0, width, height, QColor('white'))
+        painter.fillRect(0, 0, width, height, Qt.white)
 
         #Compute width/height of the columns and rows
         
@@ -348,12 +357,12 @@ class WorldWidget(QWidget):
         if start != None:
             painter.fillRect(start.column * (colWidth + self._GRID_SIZE),
                              start.row * (rowHeight + self._GRID_SIZE),
-                             colWidth, rowHeight, QColor('Green'))
+                             colWidth, rowHeight, Qt.darkGreen)
 
         if end != None:
             painter.fillRect(end.column * (colWidth + self._GRID_SIZE),
                              end.row * (rowHeight + self._GRID_SIZE),
-                             colWidth, rowHeight, QColor('Red'))
+                             colWidth, rowHeight, Qt.red)
             
     def _drawVisitedCells(self, colWidth, rowHeight, painter):
         '''
@@ -365,7 +374,7 @@ class WorldWidget(QWidget):
             for cell in visited:
                 painter.fillRect(cell.column * (colWidth + self._GRID_SIZE),
                                  cell.row * (rowHeight + self._GRID_SIZE),
-                                 colWidth, rowHeight, QColor('cyan'))
+                                 colWidth, rowHeight, Qt.cyan)
                 
                 if self._drawCosts:
                 #Draw the estimated cost value of the current cell
@@ -385,7 +394,7 @@ class WorldWidget(QWidget):
             for cell in visited:
                 painter.fillRect(cell.column * (colWidth + self._GRID_SIZE),
                                  cell.row * (rowHeight + self._GRID_SIZE),
-                                 colWidth, rowHeight, QColor('green'))
+                                 colWidth, rowHeight, Qt.green)
                 if self._drawCosts:
                     #Draw the estimated cost value of the current cell
                     textLoc = QPoint((cell.column + .1) * (colWidth + self._GRID_SIZE), 
@@ -402,7 +411,7 @@ class WorldWidget(QWidget):
         if curCell != None:
             painter.fillRect(curCell.column * (colWidth + self._GRID_SIZE),
                              curCell.row * (rowHeight + self._GRID_SIZE),
-                             colWidth, rowHeight, QColor('Yellow'))
+                             colWidth, rowHeight, Qt.yellow)
             
             if self._drawCosts:
                 #Draw the estimated cost value of the current cell
@@ -428,8 +437,7 @@ class WorldWidget(QWidget):
                              (curCell.row + .5) * (rowHeight + self._GRID_SIZE))
                 
                 #Paint line drawing a path from start to current/finish
-                #painter.setBrush(QColor('Red'))
-                painter.setPen(QColor('Red'))
+                painter.setPen(Qt.red)
                 painter.drawLine(prevCenter, curCenter)
                 
                 #Reset for next loop iteration
