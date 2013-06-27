@@ -50,6 +50,7 @@ class MainWindow(object):
         layout.addWidget(self._buildSetupPanel())
         layout.addWidget(self._buildSpeedPanel())
         layout.addWidget(self._buildResultsPanel())
+        layout.addWidget(self._buildRenderingOptions())
         layout.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         
         #grpBx = QGroupBox("Controls")
@@ -132,6 +133,51 @@ class MainWindow(object):
         grpBx.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
         return grpBx
     
+    def _buildRenderingOptions(self):
+        self._openChk = QCheckBox("Active Cells")
+        self._visitedChk = QCheckBox("Visited Cells")
+        self._pathChk = QCheckBox("Draw Path")
+        self._costChk = QCheckBox("Draw Estimated Costs")
+        
+        pal = self._openChk.palette()
+        pal.setColor(QPalette.WindowText, QColor('green'))
+        self._openChk.setPalette(pal)
+        
+        pal = self._visitedChk.palette()
+        pal.setColor(QPalette.WindowText, QColor('cyan'))
+        self._visitedChk.setPalette(pal)
+        
+        pal = self._pathChk.palette()
+        pal.setColor(QPalette.WindowText, QColor('red'))
+        self._pathChk.setPalette(pal)
+        
+        self._visitedChk.setChecked(True)
+        self._pathChk.setChecked(True)
+        self._costChk.setChecked(True)
+        
+        self._openChk.stateChanged.connect(self._renderingOptionChanged)
+        self._visitedChk.stateChanged.connect(self._renderingOptionChanged)
+        self._pathChk.stateChanged.connect(self._renderingOptionChanged)
+        self._costChk.stateChanged.connect(self._renderingOptionChanged)
+        
+        layout = QVBoxLayout()
+        layout.addWidget(self._openChk)
+        layout.addWidget(self._visitedChk)
+        layout.addWidget(self._pathChk)
+        layout.addWidget(self._costChk)
+        
+        grpBx = QGroupBox("Rendering Options")
+        grpBx.setLayout(layout)
+        grpBx.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
+        return grpBx        
+    
+    @Slot()
+    def _renderingOptionChanged(self, value):
+        self._worldWidget.setDrawActiveCells(self._openChk.isChecked())
+        self._worldWidget.setDrawVisitedCells(self._visitedChk.isChecked())
+        self._worldWidget.setDrawPath(self._pathChk.isChecked())
+        self._worldWidget.setDrawCosts(self._costChk.isChecked())
+    
     @Slot()
     def _onPercentSlideChange(self, value):
         #Add extra padding to the front of the string to help prevent
@@ -213,6 +259,22 @@ class WorldWidget(QWidget):
         self.setMinimumSize(65,65)
         self._model = model
         self._alg = alg
+        self._drawActive = False
+        self._drawVisited = True
+        self._drawCheapestPath = True
+        self._drawCosts = True
+    
+    def setDrawActiveCells(self, doDraw):
+        self._drawActive = doDraw
+        
+    def setDrawVisitedCells(self, doDraw):
+        self._drawVisited = doDraw
+        
+    def setDrawPath(self, doDraw):
+        self._drawCheapestPath = doDraw
+        
+    def setDrawCosts(self, doDraw):
+        self._drawCosts = doDraw
     
     def paintEvent(self, e):
         painter = QPainter()
@@ -235,11 +297,14 @@ class WorldWidget(QWidget):
 
         self._drawGrid(width, height, colWidth, rowHeight, painter)
         self._drawObstacles(colWidth, rowHeight, painter)
-        self._drawVisitedCells(colWidth, rowHeight, painter)
-        #self._drawActiveCells(colWidth, rowHeight, painter)
+        if self._drawVisited:
+            self._drawVisitedCells(colWidth, rowHeight, painter)
+        if self._drawActive:
+            self._drawActiveCells(colWidth, rowHeight, painter)
         self._drawStartAndEndCells(colWidth, rowHeight, painter)
         self._drawCurrentCell(colWidth, rowHeight, painter)
-        self._drawPath(colWidth, rowHeight, painter)
+        if self._drawCheapestPath:
+            self._drawPath(colWidth, rowHeight, painter)
         
         painter.end()
 
@@ -301,11 +366,14 @@ class WorldWidget(QWidget):
                 painter.fillRect(cell.column * (colWidth + self._GRID_SIZE),
                                  cell.row * (rowHeight + self._GRID_SIZE),
                                  colWidth, rowHeight, QColor('cyan'))
-                #Draw the estimated cost value of the current cell                
-                textLoc = QPoint((cell.column + .1) * (colWidth + self._GRID_SIZE), 
+                
+                if self._drawCosts:
+                #Draw the estimated cost value of the current cell
+                    textLoc = QPoint((cell.column + .1) * (colWidth + self._GRID_SIZE), 
                                  #Row + 3/4 of a row so that text is in the cell
                                  (cell.row + .75) * (rowHeight + self._GRID_SIZE))
-                painter.drawText(textLoc, "{0:.3g}".format(cell.estimatedPathCostToCell))                
+                    if self._drawCosts:
+                        painter.drawText(textLoc, "{0:.3g}".format(cell.estimatedPathCostToCell))                
 
     def _drawActiveCells(self, colWidth, rowHeight, painter):
         '''
@@ -318,11 +386,12 @@ class WorldWidget(QWidget):
                 painter.fillRect(cell.column * (colWidth + self._GRID_SIZE),
                                  cell.row * (rowHeight + self._GRID_SIZE),
                                  colWidth, rowHeight, QColor('green'))
-                #Draw the estimated cost value of the current cell
-                textLoc = QPoint((cell.column + .1) * (colWidth + self._GRID_SIZE), 
+                if self._drawCosts:
+                    #Draw the estimated cost value of the current cell
+                    textLoc = QPoint((cell.column + .1) * (colWidth + self._GRID_SIZE), 
                                  #Row + 3/4 of a row so that text is in the cell
                                  (cell.row + .75) * (rowHeight + self._GRID_SIZE))
-                painter.drawText(textLoc, "{0:.3g}".format(cell.estimatedPathCostToCell))
+                    painter.drawText(textLoc, "{0:.3g}".format(cell.estimatedPathCostToCell))
                 
     def _drawCurrentCell(self, colWidth, rowHeight, painter):
         '''
@@ -334,11 +403,13 @@ class WorldWidget(QWidget):
             painter.fillRect(curCell.column * (colWidth + self._GRID_SIZE),
                              curCell.row * (rowHeight + self._GRID_SIZE),
                              colWidth, rowHeight, QColor('Yellow'))
-            #Draw the estimated cost value of the current cell
-            textLoc = QPoint((curCell.column + .1) * (colWidth + self._GRID_SIZE), 
+            
+            if self._drawCosts:
+                #Draw the estimated cost value of the current cell
+                textLoc = QPoint((curCell.column + .1) * (colWidth + self._GRID_SIZE), 
                              #Row + 3/4 of a row so that text is in the cell
                              (curCell.row + .75) * (rowHeight + self._GRID_SIZE))
-            painter.drawText(textLoc, "{0:.3g}".format(curCell.estimatedPathCostToCell))
+                painter.drawText(textLoc, "{0:.3g}".format(curCell.estimatedPathCostToCell))
             
     def _drawPath(self, colWidth, rowHeight, painter):
         '''
