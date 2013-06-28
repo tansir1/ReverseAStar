@@ -91,7 +91,7 @@ class ReverseAStarAlgorithm(object):
         A simple heuristic that just computes the distance from the given cell
         to the goal cell.
         '''
-        return self._distBetweenCells(fromCell, self._worldModel.getEndCell())
+        return self._distBetweenCells(fromCell, self._endCell)
         
     def _distBetweenCells(self, src, dest):
         '''
