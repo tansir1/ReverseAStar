@@ -28,6 +28,9 @@ class MainWindow(object):
     '''
 
     def __init__(self, model, alg):
+        '''
+        Constructs the GUI and initializes internal parameters.
+        '''
         self._window = QMainWindow()
         self._window.setWindowTitle("Reverse A*")
         self._worldWidget = WorldWidget(model, alg)
@@ -35,11 +38,15 @@ class MainWindow(object):
         self._alg = alg
         self._spdSetting = 0
         self._timer = QTimer()
+        #Every time the timer times out, invoke the _onStep method.
         self._timer.timeout.connect(self._onStep)        
         self._buildGUI()
         self._window.show()
 
     def _buildGUI(self):
+        '''
+        Construct the GUI widgets and layouts.
+        '''
         centerWidget = QWidget()
         self._window.setCentralWidget(centerWidget)
         
@@ -58,6 +65,9 @@ class MainWindow(object):
 
         
     def _buildControlPanel(self):
+        '''
+        Create all buttons, labels, etc for the application control elements
+        '''
         layout = QVBoxLayout()
         layout.addWidget(self._buildSetupPanel())
         layout.addWidget(self._buildSpeedPanel())
@@ -65,16 +75,16 @@ class MainWindow(object):
         layout.addWidget(self._buildRenderingOptions())
         layout.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         
-        #grpBx = QGroupBox("Controls")
-        #grpBx.setLayout(layout)
-        #return grpBx
-        #grpBx.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         ctrlWidget = QWidget(self._window)
         ctrlWidget.setLayout(layout)
         ctrlWidget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         return ctrlWidget        
     
     def _buildSetupPanel(self):
+        '''
+        Creates the sub-panel containing control widgets for re-initializing 
+        the world on demand.
+        '''
         self._percentLbl = QLabel("%")
         self._setupBtn = QPushButton("Setup", self._window)
         self._setupBtn.clicked.connect(self._onSetup)
@@ -99,6 +109,10 @@ class MainWindow(object):
         return grpBx        
         
     def _buildSpeedPanel(self):
+        '''
+        Creates the sub-panel containing control widgets for controlling the 
+        speed of execution of the algorithm.
+        '''
         self._runBtn = QPushButton("Run", self._window)
         self._stepBtn = QPushButton("Step Once", self._window)        
         self._runBtn.clicked.connect(self._onRun)
@@ -131,13 +145,19 @@ class MainWindow(object):
         return grpBx
     
     def _buildResultsPanel(self):
+        '''
+        Creates the sub-panel containing displays widgets for informing the 
+        user on the results of running the algorithm.
+        '''        
         self._doneLbl = QLabel("No", self._window)
         self._solvableLbl = QLabel("Yes", self._window)
         
+        #_doneLbl is highlighted green upon successful algorithm completion
         pal = self._doneLbl.palette()
         pal.setColor(QPalette.Window, Qt.green)
         self._doneLbl.setPalette(pal)
 
+        #_solvableLbl is highlighted red if the world model isn't solvable
         pal = self._solvableLbl.palette()
         pal.setColor(QPalette.Window, Qt.red)
         self._solvableLbl.setPalette(pal)          
@@ -154,6 +174,10 @@ class MainWindow(object):
         return grpBx
     
     def _buildRenderingOptions(self):
+        '''
+        Creates the sub-panel containing control widgets for setting options
+        in how the world is rendered on the GUI.
+        '''        
         self._openChk = QCheckBox("Active Cells")
         self._visitedChk = QCheckBox("Visited Cells")
         self._pathChk = QCheckBox("Draw Path")
@@ -193,6 +217,11 @@ class MainWindow(object):
     
     @Slot()
     def _renderingOptionChanged(self, value):
+        '''
+        When any rendering option is changed this method is invoked.  It polls
+        the GUI for the selected setting values and passes them to the 2D
+        world widget.
+        '''
         self._worldWidget.setDrawActiveCells(self._openChk.isChecked())
         self._worldWidget.setDrawVisitedCells(self._visitedChk.isChecked())
         self._worldWidget.setDrawPath(self._pathChk.isChecked())
@@ -201,6 +230,11 @@ class MainWindow(object):
     
     @Slot()
     def _onPercentSlideChange(self, value):
+        '''
+        Invoked every time the percent slider is changed.  Displays the percent
+        value on the GUI.
+        '''
+        
         #Add extra padding to the front of the string to help prevent
         #gui layout resizing
         if value < 10:
@@ -212,12 +246,20 @@ class MainWindow(object):
     
     @Slot()
     def _onSpeedChange(self, value):
+        '''
+        Invoked every time one of the speed setting radio buttons are selected.
+        Resets the algorithm iterating callback timer if it's currently running.
+        '''
         self._spdSetting = self._speedGroup.checkedId()
         if self._timer.isActive():
             self._resetTimer()            
          
     @Slot()
     def _onSetup(self):
+        '''
+        Invoked when the setup button is pushed.  Re-initializes the world model
+        and the algorithm.
+        '''
         self._timer.stop()
         self._runBtn.setText('Run')
         self._model.reset(self._percentObstacleSldr.value() / 100.0)
@@ -230,6 +272,10 @@ class MainWindow(object):
     
     @Slot()
     def _onRun(self):
+        '''
+        Invoked when the run button is pushed.  Toggles the algorithm iterating
+        timer on and off.
+        '''
         if self._timer.isActive():
             self._timer.stop()
             self._runBtn.setText("Run")
@@ -239,6 +285,11 @@ class MainWindow(object):
     
     @Slot()
     def _onStep(self):
+        '''
+        Invoked on every 'step once' call and on every timer timeout.  Iterates
+        one step of the algorithm and then checks for termination conditions
+        such as the algorithm being done or solvable.
+        '''
         self._alg.step()
         self._worldWidget.repaint()
         
@@ -249,6 +300,9 @@ class MainWindow(object):
         self._checkTerminalConditions()
             
     def _checkTerminalConditions(self):
+        '''
+        Sets the 'results' labels based on the algorithm results.
+        '''
         if self._alg.isDone():
             self._doneLbl.setText("Yes")
             self._doneLbl.setAutoFillBackground(True)
@@ -258,6 +312,10 @@ class MainWindow(object):
             self._solvableLbl.setText("No")
 
     def _resetTimer(self):
+        '''
+        When the algorithm run speed is modified by the user this resets the
+        algorithm timer.
+        '''
         if self._spdSetting == 3:
             while not self._alg.isDone() and self._alg.isSolvable():
                 self._alg.step()
@@ -278,7 +336,10 @@ class MainWindow(object):
             self._timer.start(timeOut)
 
 class WorldWidget(QWidget):
-        
+    '''
+    This class is a custom QWidget that renders a 2D grid world.
+    '''
+    
     def __init__(self, model, alg):
         super(WorldWidget, self).__init__()
         self._NUM_COLS = model.getNumColumns()
@@ -323,6 +384,7 @@ class WorldWidget(QWidget):
         colWidth = max(1, colWidth)
         rowHeight = max(1, rowHeight)
 
+        #Perform drawing operations for world rendering
         self._drawGrid(width, height, colWidth, rowHeight, painter)
         self._drawObstacles(colWidth, rowHeight, painter)
         if self._drawVisited:

@@ -4,12 +4,15 @@ import py2exe
 import os
 import sys; sys.argv.append('py2exe')
 
+#This file runs a setup script for invoking py2exe to create a single
+#executable windows file.
+
 #http://www.py2exe.org/index.cgi/ListOfOptions
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + '/reverseastar')
 
 py2exe_options = dict(
-                      ascii=True,  # Exclude encodings
+                      ascii=True,
                       excludes=['_ssl', 'pdb', 'unittest', 'inspect',
                                 'pyreadline', 'difflib', 'doctest', 'locale', 'optparse', 'pickle', 
                                 'calendar',  '_gtkagg', '_tkagg', 'bsddb', 'curses', 'email', 
@@ -20,7 +23,6 @@ py2exe_options = dict(
                       compressed=True,
                       includes=['gui', 'model', 'algorithm'],
                       bundle_files=1,
-                      #build = {'build_base': '../build'},
                       dist_dir='../dist'
                       )
 
